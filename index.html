@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FlowCharty</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+  <!-- -------------------------- The Drawing Area --------------------------- -->
+  <svg id="canvas">
+    <defs>
+      <!-- The Arrow Heads. Lines point at these by id. -->
+      <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5"
+              markerWidth="10" markerHeight="10"
+              markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+        <path d="M 0 0 L 10 5 L 0 10 Z" fill="#5b6475"></path>
+      </marker>
+      <marker id="arrow-blue" viewBox="0 0 10 10" refX="9" refY="5"
+              markerWidth="11" markerHeight="11"
+              markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+        <path d="M 0 0 L 10 5 L 0 10 Z" fill="#2f6fed"></path>
+      </marker>
+    </defs>
+    <g id="world"></g>
+  </svg>
+
+  <!-- ----------------------------- The Toolbar ----------------------------- -->
+  <div id="toolbar">
+    
+    <!-- Shape Buttons -->
+    <button class="tool shape-tool" data-shape-type="rect" data-tip="Process box">
+      <svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="1"></rect></svg>
+    </button>
+    <button class="tool shape-tool" data-shape-type="rounded" data-tip="Rounded box">
+      <svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="3.5"></rect></svg>
+    </button>
+    <button class="tool shape-tool" data-shape-type="pill" data-tip="Start / End">
+      <svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="10" rx="5"></rect></svg>
+    </button>
+    <button class="tool shape-tool" data-shape-type="diamond" data-tip="Decision">
+      <svg viewBox="0 0 24 24"><path d="M 12 3 L 21 12 L 12 21 L 3 12 Z"></path></svg>
+    </button>
+    <button class="tool shape-tool" data-shape-type="slant" data-tip="Input / Output">
+      <svg viewBox="0 0 24 24"><path d="M 7 6 H 22 L 17 18 H 2 Z"></path></svg>
+    </button>
+    <button class="tool shape-tool" data-shape-type="circle" data-tip="Circle">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"></circle></svg>
+    </button>
+    <button class="tool shape-tool" data-shape-type="document" data-tip="Document">
+      <svg viewBox="0 0 24 24"><path d="M 4 4 H 20 V 17 C 15 14 9 21 4 17.5 Z"></path></svg>
+    </button>
+    <button class="tool shape-tool" data-shape-type="database" data-tip="Database">
+      <svg viewBox="0 0 24 24">
+        <ellipse cx="12" cy="6" rx="7" ry="2.5"></ellipse>
+        <path d="M 5 6 V 18 C 5 19.4 8.1 20.5 12 20.5 S 19 19.4 19 18 V 6"></path>
+      </svg>
+    </button>
+    <button class="tool shape-tool" data-shape-type="hexagon" data-tip="Preparation">
+      <svg viewBox="0 0 24 24"><path d="M 7 5 H 17 L 21 12 L 17 19 H 7 L 3 12 Z"></path></svg>
+    </button>
+
+    <div class="divider"></div>
+
+    <!-- Branch and Text Buttons -->
+    <button class="tool" id="branch-button" data-tip="Branch a new shape (Tab)">
+      <svg viewBox="0 0 24 24"><path d="M 12 5 V 19 M 5 12 H 19"></path></svg>
+    </button>
+    <button class="tool" id="text-button" data-tip="Type text (Enter)">
+      <svg viewBox="0 0 24 24"><path d="M 3.5 6 H 14.5 M 9 6 V 18 M 19 4.5 V 19.5"></path></svg>
+    </button>
+    
+    <div class="divider"></div>
+
+    <!-- Arrow Style Buttons -->
+    <button class="tool arrow-tool" data-arrow="end" data-tip="Arrow">
+      <svg viewBox="0 0 24 24"><path d="M 4 12 H 19 M 14 7 L 19 12 L 14 17"></path></svg>
+    </button>
+    <button class="tool arrow-tool" data-arrow="both" data-tip="Two-way arrow">
+      <svg viewBox="0 0 24 24"><path d="M 4 12 H 20 M 8 8 L 4 12 L 8 16 M 16 8 L 20 12 L 16 16"></path></svg>
+    </button>
+    <button class="tool arrow-tool" data-arrow="none" data-tip="Plain line">
+      <svg viewBox="0 0 24 24"><path d="M 4 12 H 20"></path></svg>
+    </button>
+    <button class="tool" id="dash-button" data-tip="Dashed line">
+      <svg viewBox="0 0 24 24"><path d="M 3 12 H 6.5 M 10 12 H 14 M 17.5 12 H 21"></path></svg>
+    </button>
+    <button class="tool" id="flip-button" data-tip="Flip arrow direction">
+      <svg viewBox="0 0 24 24"><path d="M 4 8 H 19 M 15 4 L 19 8 L 15 12 M 20 16 H 5 M 9 12 L 5 16 L 9 20"></path></svg>
+    </button>
+
+    <div class="divider"></div>
+
+    <!-- Line Route Buttons -->
+    <button class="tool route-tool" data-route="straight" data-tip="Straight line">
+      <svg viewBox="0 0 24 24"><path d="M 4 19 L 20 5"></path></svg>
+    </button>
+    <button class="tool route-tool" data-route="elbow" data-tip="Elbow line (right angles)">
+      <svg viewBox="0 0 24 24"><path d="M 4 19 H 12 V 5 H 20"></path></svg>
+    </button>
+    <button class="tool route-tool" data-route="curve" data-tip="Curved line">
+      <svg viewBox="0 0 24 24"><path d="M 4 19 C 4 8 20 16 20 5"></path></svg>
+    </button>
+
+    <div class="divider"></div>
+
+    <!-- Color Button -->
+    <button class="tool" id="color-button" data-tip="Fill color">
+      <span id="color-dot"></span>
+    </button>
+
+    <div class="divider"></div>
+
+    <!-- Undo, Redo, Delete -->
+    <button class="tool" id="undo-button" data-tip="Undo">
+      <svg viewBox="0 0 24 24"><path d="M 9 14 L 4 9 L 9 4 M 4 9 H 14.5 A 5.5 5.5 0 0 1 14.5 20 H 11"></path></svg>
+    </button>
+    <button class="tool" id="redo-button" data-tip="Redo">
+      <svg viewBox="0 0 24 24"><path d="M 15 14 L 20 9 L 15 4 M 20 9 H 9.5 A 5.5 5.5 0 0 0 9.5 20 H 13"></path></svg>
+    </button>
+    <button class="tool" id="delete-button" data-tip="Delete (Backspace)">
+      <svg viewBox="0 0 24 24"><path d="M 4 7 H 20 M 9 7 V 4.5 H 15 V 7 M 6 7 L 7 20 H 17 L 18 7"></path></svg>
+    </button>
+
+    <div class="divider"></div>
+
+    <!-- Download and Clear -->
+    <button class="tool" id="download-button" data-tip="Download as picture">
+      <svg viewBox="0 0 24 24"><path d="M 12 4 V 15 M 7 10 L 12 15 L 17 10 M 5 20 H 19"></path></svg>
+    </button>
+    <button class="tool" id="clear-button" data-tip="New (clear canvas)">
+      <svg viewBox="0 0 24 24"><path d="M 6 3 H 14 L 19 8 V 21 H 6 Z M 14 3 V 8 H 19"></path></svg>
+    </button>
+
+  </div> 
+
+  <!-- --------------------------- The Color Menu ---------------------------- -->
+  <div id="color-menu" class="popup">
+    <button class="swatch" data-color="#ffffff" style="background: #ffffff; border-color: #3b4252;"></button>
+    <button class="swatch" data-color="#e8f0fe" style="background: #e8f0fe; border-color: #2f6fed;"></button>
+    <button class="swatch" data-color="#e3f5ea" style="background: #e3f5ea; border-color: #1f9254;"></button>
+    <button class="swatch" data-color="#fff4cf" style="background: #fff4cf; border-color: #b7860b;"></button>
+    <button class="swatch" data-color="#fde6ea" style="background: #fde6ea; border-color: #c8364f;"></button>
+    <button class="swatch" data-color="#eee7fd" style="background: #eee7fd; border-color: #6a43c9;"></button>
+    <button class="swatch" data-color="#eceff3" style="background: #eceff3; border-color: #5b6475;"></button>
+  </div>
+
+  <!-- -------------------- Small Pieces Around the Edges -------------------- -->
+  <div id="empty-message">
+    <h2>Click a shape up top to start</h2>
+    <p>or double-click anywhere on the canvas</p>
+  </div>
+
+  <div id="hint"></div>
+
+  <div id="zoom-controls">
+    <button class="tool" id="zoom-out-button" data-tip="Zoom out">
+      <svg viewBox="0 0 24 24"><path d="M 6 12 H 18"></path></svg>
+    </button>
+    <span id="zoom-label" title="Back to 100%">100%</span>
+    <button class="tool" id="zoom-in-button" data-tip="Zoom in">
+      <svg viewBox="0 0 24 24"><path d="M 6 12 H 18 M 12 6 V 18"></path></svg>
+    </button>
+    <button class="tool" id="fit-button" data-tip="Fit chart to screen">
+      <svg viewBox="0 0 24 24"><path d="M 4 9 V 4 H 9 M 15 4 H 20 V 9 M 20 15 V 20 H 15 M 9 20 H 4 V 15"></path></svg>
+    </button>
+  </div>
+
+  <textarea id="text-editor" spellcheck="false"></textarea>
+
+  <div id="message"></div>
+  <script src="app.js"></script>
+</body>
+</html>
