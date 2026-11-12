@@ -1,1 +1,162 @@
-/* A CSS Comment */ 
+/* -------------------------------------------------------------------------- */
+/*                           FLOWCHARTY - style.css                           */
+/* -------------------------------------------------------------------------- */
+
+/* ----------------- Reused Colors, Stored as CSS Variables ----------------- */
+:root {
+    --background: #f6f7f9;
+    --text: #1d2433;
+    --muted-text: #6b7385;
+    --border: #dde1e8;
+    --blue: #2f6fed;
+    --panel: #ffffff;
+}
+
+/* ----------------------------- The Whole Page ----------------------------- */
+* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    margin: 0;
+    height: 100%;
+    overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: var(--text);
+    background: var(--background);
+    user-select: none;
+}
+
+/* ---------------------------- The Drawing Area ---------------------------- */
+#canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    touch-action: none;
+    background-image: radial-gradient(circle, #cdd2dc 1px, transparent 1.3px);
+}
+
+/* ------------------------------- The Toolbar ------------------------------ */
+#toolbar {
+    position: fixed;
+    top: 12px;
+    left: 0;
+    right: 0;
+    margin: 0 auto;
+    width: max-content;
+    max-width: calc(100vw - 20px);
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 2px;
+    padding: 5px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: 0 6px 20px rgba(20, 30, 50, 0.08);
+    z-index: 5;
+}
+
+.tool {
+    position: relative;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--text);
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+}
+
+.tool:hover{
+    background: #eef1f6;
+}
+
+.tool:active {
+    background: #e3ebfd;
+    color: var(--blue);
+}
+
+.tool.dim {
+    opacity: 0.35;
+}
+
+.tool svg {
+    width: 22px;
+    height: 22px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+/* ------------ ToolTips - Shows data-tip When You Hover Over It ------------ */
+.tool[data-tip]:hover::after {
+    content: attr(data-tip);
+    position: absolute;
+    top: 42px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 4px 7px;
+    border-radius: 5px;
+    background: var(--text);
+    color: white;
+    font-size: 11px;
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: 9;
+}
+
+.divider {
+    width: 1px;
+    height: 24px;
+    margin: 0 5px;
+    background: var(--border);
+}
+
+#color-dot {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 1.5px solid #3b4252;
+}
+
+/* ----------------------------- The Color Menu ----------------------------- */
+.popup {
+    position: fixed;
+    display: none;
+    gap: 6px;
+    padding: 8px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(20, 30, 50, 0.12);
+    z-index: 8;
+}
+
+.popup.open {
+    display: flex;
+}
+
+.swatch {
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border-radius: 50%;
+    border: 1.5px solid;
+    cursor: pointer;
+}
+
+.swatch:hover {
+    transform: scale(1.1);
+}
+
+/* --------------- Message in the Middle When Canvas is Empty --------------- */
