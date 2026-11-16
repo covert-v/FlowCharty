@@ -178,6 +178,77 @@ function isDoubleClick(target) {
 /*                               Saving and Undo                             4*/
 /* -------------------------------------------------------------------------- */
 
+function saveToBrowser() {
+  const everything = {
+    chart: chart,
+    camera: camera,
+    lineStyle: lineStyle,
+    currentColor: currentColor
+  };
+  try {
+    localStorage.setItem(SAVE_KEY, JSON.stringify(everything));
+  } catch (error) {
+    console.log('Could not save:', error);
+  }
+}
+
+function loadFromBrowser() {
+  try {
+    const savedText = localStorage.getItem(SAVE_KEY);
+    if (savedText === null) {
+      return;
+    }
+    const saved = JSON.parse(savedText);
+    chart = saved.chart;
+    camera = saved.camera;
+    lineStyle = saved.lineStyle;
+    currentColor = saved.currentColor;
+  } catch (error) {
+    console.log('Could not load the saved chart:', error);
+  }
+}
+
+function saveAndRender() {
+  saveToBrowser();
+  render();
+}
+
+function rememberForUndo() {
+  undoStack.push(JSON.stringify(chart));
+  if (undoStack.length > 200) {
+    undoStack.shift();
+  }
+  redoStack = []
+}
+
+function undo() {
+  finishEditing();
+  if (undoStack.length === 0) {
+    return;
+  }
+  redoStack.push(JSON.stringify(chart));
+  chart = JSON.parse(undoStack.pop());
+  forgetMissingSelection();
+  saveAndRender();
+}
+
+function redo() {
+  finishEditing();
+  if (redoStack.length === 0) {
+    return;
+  }
+  undoStack.push(JSON.stringify(chart));
+  chart = JSON.parse(redoStack.pop());
+  forgetMissingSelection();
+  saveAndRender();
+}
+
+function forgetMissingSelection() {
+  selectedShapeIds = selectedShapesIds.filter(id => findShape(id));
+  if (selectedLineId !== null && !findLine(selectedLineId)) {
+    selectedLineId = null;
+  }
+}
 
 /* -------------------------------------------------------------------------- */
 /*                           Shape Outlines and Text                         5*/
@@ -289,6 +360,24 @@ function wrapText(text, maxWidth, fontSize) {
 }
 
 /* -------------------------------------------------------------------------- */
+/*                                 Shape Math                                6*/
+/* -------------------------------------------------------------------------- */
+
+function spotIsTaken(x, y, width, height) {
+  const gap = 16;
+  for (const shape of chart.shapes) {
+    const overlaps =  x < shape.x + shape.width + gap &&
+                      x + width + gap > shape.x &&
+                      y < shape.y + shape.height + gap &&
+                      y + height + gap > shape.y;
+    if (overlaps) {
+      return true;
+    }    
+  }
+  return false;
+}
+
+/* -------------------------------------------------------------------------- */
 /*                                Drawing Logic                              8*/
 /* -------------------------------------------------------------------------- */
 
@@ -351,10 +440,102 @@ function render() {
   document.getElementById('zoom-label').textContent = Math.round(camera.zoom * 100) + '%';
 }
 
+/* -------------------------------------------------------------------------- */
+/*                  Action Logic - How buttons and keys work                 9*/
+/* -------------------------------------------------------------------------- */
 
+function viewCenter() {
+  const box = canvas.getBoundingClientRect();
+  return screenToWorld(box.left + box.width / 2, box.top + box.height / 2);
+}
+
+function addShapeAt(type, centerX, centerY) {
+  const size = SHAPE_SIZES[type];
+  let x = snapToGrid(centerX - size.width / 2);
+  let y = snapToGrid(centerY - size.height / 2)
+
+  let tries = 0;
+  while (spotIsTaken(x, y size.width, size.height) && tries < 40) {
+    x = x + 20;
+    y = y + 20;
+    tries = tries + 1;
+  }
+
+  function clickShapeButton(type) {
+    finishEditing();
+    lastShapeType = type;
+    if (selectedShapeIds.length > 0) {
+      changeSelectedShapes(type);
+    } else {
+      const center = viewCenter();
+      addShapeAt(type, center.x, center.y);
+    }
+  }
+
+  function changeSelectedShapes(type) {
+    rememberForUndo();
+    for (const is of selectedShapeIds) {
+      const shape = findShape(id);
+      const oldSize = SHAPE_SIZES[shape.type];
+      const newSize = SHAPE_SIZES[type];
+
+      const stillDefautSize = shape.width === oldSize.width && shape.height === oldSize.height;
+      if (stillDefautSize) {
+        shape.x = shape.x + (shape.width - newSize.width) / 2;
+        shape.y = shape.y + (shape.height - newSize.height) / 2;
+        shape.width = newSize.width;
+        shape.height = newSize.height;
+      }
+      shape.type = type;
+    }
+    saveAndRender();
+  }
+
+  rememberForUndo();
+  const shape = {
+    id: makeId('shape'),
+    type: type,
+    x: x,
+    y: y,
+    width: size.width,
+    height: size.height,
+    text: '',
+    fill: currentColor
+  };
+  chart.shapes.push(shape);
+  selectOnly(shape.id);
+  lastShapeType = type;
+  makeVisible(shape);
+  saveAndRender();
+}
+
+function makeVisible(shape) {
+  const box = canvas.getBoundingClientRect();
+  const z = camera.zoom;
+  const margin = 90;
+  const left = shape.x * z + camera.x;
+  const top = shape.y * z + camera.y;
+  const right = (shape.x + shape.width) * z + camera.x;
+  const bottom = (shape.y + shape.height) * z + camera.y;
+  const offScreen = left < margin || top < margin || right > box.width - margin || bottom > box.height - margin;
+  if (offScreen) {
+    const center = centerOf(shape);
+    camera.x = box.width / 2 - center.x * z;
+    camera.y = box.height / 2 - center.y * z;
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+/*                                Typing Logic                              10*/
+/* -------------------------------------------------------------------------- */
+
+function finishEditing() {
+  //placeholder
+}
 
 /* -------------------------------------------------------------------------- */
 /*                                   STARTUP                                16*/
 /* -------------------------------------------------------------------------- */
 console.log ('FlowCharty is running!')
+loadFromBrowser();
 render();
